@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drink Cart</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background:#f5f5f5; }
+    h1 { margin-bottom: 10px; }
+    .search { margin-bottom: 20px; }
+    input { padding: 8px; width: 250px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    .layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .card h3 { margin: 0 0 5px; }
+    .card small { color: #555; }
+    .group { background:#fff; padding:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+    .group ul { padding-left: 20px; }
+    .count { font-weight: bold; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; }
+    .modal-content { background:#fff; padding:20px; width:300px; border-radius:8px; }
+  </style>
+</head>
+<body>
+
+<h1>Drink Cart</h1>
+
+<div class="search">
+  <input id="searchInput" placeholder="Search drink..." />
+  <button onclick="searchDrink()">Search</button>
+</div>
+
+<div class="layout">
+  <!-- Drink Cards -->
+  <div id="drinkCards" class="cards"></div>
+
+  <!-- Group Panel -->
+  <div class="group">
+    <h3>Add to Group</h3>
+    <p>Drinks Count: <span id="count" class="count">0</span>/7</p>
+    <ul id="groupList"></ul>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 id="mName"></h3>
+    <p id="mCategory"></p>
+    <p id="mGlass"></p>
+    <p id="mAlcoholic"></p>
+    <p id="mInstruction"></p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+const drinks = [
+  {name:'Mojito', category:'Cocktail', glass:'Highball', alcoholic:'Yes', instruction:'Mix mint and lime'},
+  {name:'Lemonade', category:'Soft Drink', glass:'Glass', alcoholic:'No', instruction:'Mix lemon and sugar'},
+  {name:'Martini', category:'Cocktail', glass:'Martini', alcoholic:'Yes', instruction:'Stir with ice'}
+];
+
+let group = [];
+
+function renderCards(list) {
+  const wrap = document.getElementById('drinkCards');
+  wrap.innerHTML = '';
+  if (list.length === 0) {
+    wrap.innerHTML = '<p>Not Found</p>';
+    return;
+  }
+  list.forEach(d => {
+    wrap.innerHTML += `
+      <div class="card">
+        <h3>${d.name}</h3>
+        <small>${d.category}</small>
+        <p>${d.instruction.slice(0,15)}...</p>
+        <button onclick="addToGroup('${d.name}')">Add to Group</button>
+        <button onclick="showDetails('${d.name}')">Details</button>
+      </div>`;
+  });
+}
+
+function searchDrink() {
+  const q = searchInput.value.toLowerCase();
+  const result = drinks.filter(d => d.name.toLowerCase().includes(q));
+  renderCards(result);
+}
+
+function addToGroup(name) {
+  if (group.length >= 7) {
+    alert('Cannot add more than 7 drinks');
+    return;
+  }
+  if (!group.includes(name)) {
+    group.push(name);
+    document.getElementById('groupList').innerHTML += `<li>${name}</li>`;
+    document.getElementById('count').innerText = group.length;
+  }
+}
+
+function showDetails(name) {
+  const d = drinks.find(x => x.name === name);
+  mName.innerText = d.name;
+  mCategory.innerText = 'Category: ' + d.category;
+  mGlass.innerText = 'Glass: ' + d.glass;
+  mAlcoholic.innerText = 'Alcoholic: ' + d.alcoholic;
+  mInstruction.innerText = 'Instruction: ' + d.instruction;
+  modal.style.display = 'flex';
+}
+
+function closeModal() {
+  modal.style.display = 'none';
+}
+
+// Default load
+renderCards(drinks);
+</script>
+
+</body>
+</html>
