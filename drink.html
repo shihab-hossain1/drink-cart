@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drink Cart – TheCocktailDB</title>
+  <style>
+    body{font-family:Arial, sans-serif;background:#f4f4f4;margin:0;padding:16px}
+    h2{margin:10px 0}
+    .top-cart{display:flex;align-items:center;gap:12px;background:#fff;padding:10px;border-radius:8px;overflow-x:auto}
+    .top-cart img{width:45px;height:45px;border-radius:50%;object-fit:cover}
+    .count-badge{font-weight:bold}
+    .search{margin:15px 0}
+    .search input{padding:8px;width:220px}
+    .search button{padding:8px}
+    .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+    .card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+    .card img{width:100%;height:200px;object-fit:cover}
+    .card-body{padding:12px}
+    .card-body p{margin:4px 0;font-size:14px}
+    .card-body button{margin-right:6px;padding:6px 10px}
+    .disabled{opacity:.6;pointer-events:none}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center}
+    .modal-content{background:#fff;padding:20px;border-radius:10px;width:340px}
+    .modal-content img{width:100%;border-radius:8px;margin-bottom:10px}
+  </style>
+</head>
+<body>
+
+<h2>Total Cart: <span id="count" class="count-badge">0</span>/7</h2>
+<div id="cart" class="top-cart"></div>
+
+<div class="search">
+  <input id="searchInput" placeholder="Search drink" />
+  <button onclick="searchDrink()">Search</button>
+</div>
+
+<div id="drinkList" class="list"></div>
+
+<div id="modal" class="modal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <img id="mImg">
+    <h3 id="mName"></h3>
+    <p id="mCategory"></p>
+    <p id="mGlass"></p>
+    <p id="mAlcoholic"></p>
+    <p id="mInstructions"></p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+let selected = [];
+let drinks = [];
+
+window.onload = () => fetchBySearch('cocktail');
+
+function fetchBySearch(q){
+  fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${q}`)
+  .then(r=>r.json())
+  .then(d=>{drinks=d.drinks||[];render();});
+}
+
+function fetchById(id){
+  fetch(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${id}`)
+  .then(r=>r.json())
+  .then(d=>showModal(d.drinks[0]));
+}
+
+function render(){
+  const wrap=document.getElementById('drinkList');
+  wrap.innerHTML='';
+  if(!drinks.length){wrap.innerHTML='<p>Not Found</p>';return;}
+  drinks.forEach(d=>{
+    const added=selected.find(x=>x.idDrink===d.idDrink);
+    wrap.innerHTML+=`
+      <div class="card">
+        <img src="${d.strDrinkThumb}">
+        <div class="card-body">
+          <p><b>Name:</b> ${d.strDrink}</p>
+          <p><b>Category:</b> ${d.strCategory}</p>
+          <p><b>Instructions:</b> ${(d.strInstructions||'').slice(0,15)}...</p>
+          <button ${added?'class="disabled"':''} onclick="add('${d.idDrink}')">${added?'Already Selected':'Add to Group'}</button>
+          <button onclick="fetchById('${d.idDrink}')">Details</button>
+        </div>
+      </div>`;
+  });
+}
+
+function add(id){
+  if(selected.length>=7){alert('Maximum 7 drinks allowed');return;}
+  const d=drinks.find(x=>x.idDrink===id);
+  if(!selected.find(x=>x.idDrink===id)){
+    selected.push(d);
+    document.getElementById('cart').innerHTML+=`<img src="${d.strDrinkThumb}" title="${d.strDrink}">`;
+    document.getElementById('count').innerText=selected.length;
+    render();
+  }
+}
+
+function searchDrink(){
+  const q=searchInput.value.trim();
+  if(q)fetchBySearch(q);
+}
+
+function showModal(d){
+  mImg.src=d.strDrinkThumb;
+  mName.innerText=d.strDrink;
+  mCategory.innerText='Category: '+d.strCategory;
+  mGlass.innerText='Glass: '+d.strGlass;
+  mAlcoholic.innerText='Alcoholic: '+d.strAlcoholic;
+  mInstructions.innerText='Instructions: '+d.strInstructions;
+  modal.style.display='flex';
+}
+
+function closeModal(){modal.style.display='none';}
+</script>
+</body>
+</html>
